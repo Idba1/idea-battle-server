@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 9000
 const app = express()
@@ -8,7 +8,7 @@ const app = express()
 const corsOptions = {
     origin: [
         'http://localhost:5173',
-        'http://localhost:5174', 
+        'http://localhost:5174',
     ],
     credentials: true,
     optionSuccessStatus: 200,
@@ -65,9 +65,27 @@ async function run() {
         });
 
 
-         // Get all Contest data from mongo
-         app.get('/allcontest', async (req, res) => {
+        // Get all Contest data from mongo
+        app.get('/allcontest', async (req, res) => {
             const result = await allContest.find().toArray()
+            res.send(result)
+        })
+
+        // Get a single contest data from db using contest id
+        app.get('/allcontest/:id', async (req, res) => {
+            const id = req.params.id
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).json({ error: 'Invalid contest ID' });
+            }
+
+            const query = { _id: new ObjectId(id) }
+            const result = await allContest.findOne(query)
+
+            if (!result) {
+                return res.status(404).json({ error: 'Contest not found' });
+            }
+
             res.send(result)
         })
 
