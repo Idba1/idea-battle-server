@@ -71,8 +71,8 @@ async function run() {
             res.send(result)
         })
 
-        // Get a single contest data from db using contest id
-        app.get('/allcontest/:id', async (req, res) => {
+         // Get a single contest data from db using contest id
+         app.get('/allcontest/:id', async (req, res) => {
             const id = req.params.id
 
             if (!ObjectId.isValid(id)) {
@@ -88,6 +88,35 @@ async function run() {
 
             res.send(result)
         })
+
+        // Register user for contest (dummy endpoint for now, you need to implement payment gateway)
+        app.post('/register', async (req, res) => {
+            const { contestId, userId } = req.body;
+
+            if (!ObjectId.isValid(contestId)) {
+                return res.status(400).json({ error: 'Invalid contest ID' });
+            }
+
+            if (!ObjectId.isValid(userId)) {
+                return res.status(400).json({ error: 'Invalid user ID' });
+            }
+
+            // Check if user is already registered
+            const existingRegistration = await userRegistrations.findOne({ contestId: new ObjectId(contestId), userId: new ObjectId(userId) });
+
+            if (existingRegistration) {
+                return res.status(400).json({ error: 'User already registered for this contest' });
+            }
+
+            // Register the user for the contest
+            await userRegistrations.insertOne({ contestId: new ObjectId(contestId), userId: new ObjectId(userId), registeredAt: new Date() });
+
+            // Increment participation count
+            await allContest.updateOne({ _id: new ObjectId(contestId) }, { $inc: { participationCount: 1 } });
+
+            res.status(200).json({ message: 'User registered successfully' });
+        });
+
 
 
         // Connect the client to the server	(optional starting in v4.7)
