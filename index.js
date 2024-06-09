@@ -9,6 +9,8 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:5174',
+        ' https://idea-battle.web.app',
+        'https://idea-battle.firebaseapp.com'
     ],
     credentials: true,
     optionSuccessStatus: 200,
@@ -66,8 +68,8 @@ async function run() {
         });
 
 
-         // Add user to the database
-         app.post('/users', async (req, res) => {
+        // Add user to the database
+        app.post('/users', async (req, res) => {
             const { uid, email, displayName } = req.body;
             try {
                 const user = { uid, email, displayName };
@@ -93,8 +95,8 @@ async function run() {
             res.send(result)
         })
 
-         // Get a single contest data from db using contest id
-         app.get('/allcontest/:id', async (req, res) => {
+        // Get a single contest data from db using contest id
+        app.get('/allcontest/:id', async (req, res) => {
             const id = req.params.id
 
             if (!ObjectId.isValid(id)) {
