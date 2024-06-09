@@ -35,6 +35,7 @@ async function run() {
         const database = client.db('ideabattle');
         const allContest = database.collection('allcontest');
         const popularContest = database.collection('populer_contest');
+        const usersCollection = database.collection('users');
 
         //update popular contests
         async function updatePopularContests() {
@@ -65,6 +66,27 @@ async function run() {
         });
 
 
+         // Add user to the database
+         app.post('/users', async (req, res) => {
+            const { uid, email, displayName } = req.body;
+            try {
+                const user = { uid, email, displayName };
+                const result = await usersCollection.insertOne(user);
+                res.status(201).send(result.ops[0]);
+            } catch (error) {
+                if (error.code === 11000) {
+                    res.status(400).send({ error: 'User already exists' });
+                } else {
+                    res.status(400).send({ error: 'Invalid data' });
+                }
+            }
+        });
+
+        // Get all user data from mongo
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray()
+            res.send(result)
+        })
         // Get all Contest data from mongo
         app.get('/allcontest', async (req, res) => {
             const result = await allContest.find().toArray()
