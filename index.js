@@ -39,6 +39,9 @@ async function run() {
         const allContest = database.collection('allcontest');
         const popularContest = database.collection('populer_contest');
         const usersCollection = database.collection('users');
+        const contestsCollection = database.collection('contests');
+        const submissionsCollection = database.collection('submissions');
+
 
         //update popular contests
         async function updatePopularContests() {
@@ -90,11 +93,7 @@ async function run() {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
-        // Get all Contest data from mongo
-        app.get('/allcontest', async (req, res) => {
-            const result = await allContest.find().toArray()
-            res.send(result)
-        })
+
 
         // Get a single contest data from db using contest id
         app.get('/allcontest/:id', async (req, res) => {
@@ -143,6 +142,108 @@ async function run() {
         });
 
 
+
+
+        // Add Contest
+        app.post('/add-contest', async (req, res) => {
+            const contest = req.body;
+            const result = await contestsCollection.insertOne(contest);
+            res.json(result);
+        });
+
+        // get Add Contest
+        app.get('/add-contest', async (req, res) => {
+            const contest = req.body;
+            const result = await contestsCollection.find(contest).toArray();
+            res.json(result);
+        });
+
+        // Get Created Contests by Creator
+        app.get('/my-contests/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { 'loggedInUserInfo.email': email }
+            const contests = await contestsCollection.find(query).toArray();
+            res.send(result)
+        });
+
+
+        // Delete Contest
+        app.delete('/contest/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await contestsCollection.deleteOne({ _id: new ObjectId(id) });
+            res.json(result);
+        });
+
+        // Update Contest
+        app.put('/contest/:id', async (req, res) => {
+            const { id } = req.params;
+            const updatedContest = req.body;
+            const result = await contestsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: updatedContest }
+            );
+            res.json(result);
+        });
+
+        // Get Submissions by Contest
+        app.get('/submissions/:contestId', async (req, res) => {
+            const { contestId } = req.params;
+            const submissions = await submissionsCollection.find({ contestId }).toArray();
+            res.json(submissions);
+        });
+
+        // Declare Winner
+        app.put('/declare-winner/:submissionId', async (req, res) => {
+            const { submissionId } = req.params;
+            await submissionsCollection.updateMany(
+                { contestId: req.body.contestId },
+                { $set: { isWinner: false } }
+            );
+            const result = await submissionsCollection.updateOne(
+                { _id: new ObjectId(submissionId) },
+                { $set: { isWinner: true } }
+            );
+            res.json(result);
+        });
+
+        // Get All Submissions by Creator
+        app.get('/all-submissions/:creatorId', async (req, res) => {
+            const { creatorId } = req.params;
+            const submissions = await submissionsCollection.find({ creatorId }).toArray();
+            res.json(submissions);
+        });
+
+            // Declare Winner
+            app.put('/declare-winner/:submissionId', async (req, res) => {
+                const { submissionId } = req.params;
+                if (!ObjectId.isValid(submissionId)) {
+                    return res.status(400).json({ error: 'Invalid submission ID' });
+                }
+    
+                await submissionsCollection.updateMany(
+                    { contestId: req.body.contestId },
+                    { $set: { isWinner: false } }
+                );
+    
+                const result = await submissionsCollection.updateOne(
+                    { _id: new ObjectId(submissionId) },
+                    { $set: { isWinner: true } }
+                );
+    
+                res.json(result);
+            });
+
+            
+            // Get All Submissions by Creator
+            app.get('/all-submissions/:creatorId', async (req, res) => {
+                const { creatorId } = req.params;
+                if (!ObjectId.isValid(creatorId)) {
+                    return res.status(400).json({ error: 'Invalid creator ID' });
+                }
+    
+                const submissions = await submissionsCollection.find({ creatorId: new ObjectId(creatorId) }).toArray();
+                res.json(submissions);
+            });
 
         // Connect the client to the server	(optional starting in v4.7)
         // Send a ping to confirm a successful connection
